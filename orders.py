@@ -12,6 +12,7 @@ def process_order(token, items, coupon=None, shipping="standard", log=[]):
             print("Empty order")
             return None
         total = 0
+        purchased_items = []
         for item in items:
             book = database.get_book(item["book_id"])
             if book:
@@ -19,6 +20,11 @@ def process_order(token, items, coupon=None, shipping="standard", log=[]):
                     if item["qty"] > 0:
                         total = total + book[2] * item["qty"]
                         database.update_stock(book[0], book[3] - item["qty"])
+                        purchased_items.append({
+                            "title": book[1],
+                            "qty": item["qty"],
+                            "line_total": book[2]*item["qty"],
+                        })
                     else:
                         print("Invalid quantity")
                 else:
@@ -28,6 +34,9 @@ def process_order(token, items, coupon=None, shipping="standard", log=[]):
                         print("Book out of stock: " + book[1])
             else:
                 print("Book not found")
+        if not purchased_items:
+            print("Order rejected: no available items")
+            return None
         if coupon:
             if coupon == "WELCOME10":
                 total = total * 0.9
